@@ -8,6 +8,7 @@ export interface AppState {
     activeBasemap: string
     theme: string
     colorScheme: 'light' | 'dark'
+    elevationRange: { min: number; max: number } | null
 }
 
 type Listener = (state: Readonly<AppState>) => void
@@ -23,6 +24,7 @@ class AppStateManager {
             activeBasemap: localStorage.getItem('dtm-basemap') ?? DEFAULT_BASEMAP_ID,
             theme: localStorage.getItem('dtm-theme') ?? 'blue',
             colorScheme: (localStorage.getItem('dtm-color-scheme') ?? 'light') as 'light' | 'dark',
+            elevationRange: null,
         }
     }
 

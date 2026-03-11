@@ -1,4 +1,4 @@
-
+dist/
 instructions/
 node_modules/
 package-lock.json

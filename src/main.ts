@@ -81,12 +81,14 @@ async function loadAndRenderDataset(datasetId: string): Promise<void> {
   if (bboxLayer) { map.removeLayer(bboxLayer); bboxLayer = null }
   cachedGrid = null
   cachedBounds = null
+  appState.update({ elevationRange: null })
 
   setLoadingVisible(true)
   try {
     const { grid, bounds4326 } = await loadTerrain(dataset.url)
     cachedGrid = grid
     cachedBounds = bounds4326
+    appState.update({ elevationRange: { min: grid.minElevation, max: grid.maxElevation } })
 
     renderActiveLayer()
 

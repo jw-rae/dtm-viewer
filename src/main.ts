@@ -11,6 +11,7 @@ import { renderGreyscaleHeightMap, createHeightMapLayer } from './renderer/Heigh
 import { computeSlope, renderSlopeMap, createSlopeLayer } from './renderer/SlopeService.js'
 import { computeAspect, renderAspectMap, createAspectLayer } from './renderer/AspectService.js'
 import { computeHillshade, renderHillshadeMap, createHillshadeLayer } from './renderer/HillshadeService.js'
+import { computeCurvature, renderCurvatureMap, createCurvatureLayer } from './renderer/CurvatureService.js'
 import { appState } from './state/AppState.js'
 import { DATASETS } from './data/datasets.js'
 import { TerrainLayer } from './types/index.js'
@@ -62,7 +63,7 @@ function renderActiveLayer(): void {
 
   removeTerrainLayer()
 
-  const { activeTerrainLayer, slopeUnit, hillshadeParams } = appState.state
+  const { activeTerrainLayer, slopeUnit, hillshadeParams, curvatureType } = appState.state
   if (activeTerrainLayer === TerrainLayer.HeightMap) {
     const canvas = renderGreyscaleHeightMap(cachedGrid)
     const layer = createHeightMapLayer(canvas, cachedBounds)
@@ -86,8 +87,14 @@ function renderActiveLayer(): void {
     const layer = createHillshadeLayer(canvas, cachedBounds)
     map.addLayer(layer)
     terrainLayer = layer
+  } else if (activeTerrainLayer === TerrainLayer.Curvature) {
+    const result = computeCurvature(cachedGrid, curvatureType)
+    const canvas = renderCurvatureMap(result)
+    const layer = createCurvatureLayer(canvas, cachedBounds)
+    map.addLayer(layer)
+    terrainLayer = layer
   }
-  // Other layers (Contour, Curvature) added in later steps.
+  // Other layers (Contour) added in later steps.
 }
 
 async function loadAndRenderDataset(datasetId: string): Promise<void> {
@@ -136,17 +143,20 @@ let prevDataset = appState.state.currentDataset
 let prevLayer = appState.state.activeTerrainLayer
 let prevSlopeUnit = appState.state.slopeUnit
 let prevHillshadeParams = appState.state.hillshadeParams
+let prevCurvatureType = appState.state.curvatureType
 appState.subscribe((state) => {
   if (state.currentDataset !== prevDataset) {
     prevDataset = state.currentDataset
     prevLayer = state.activeTerrainLayer
     prevSlopeUnit = state.slopeUnit
     prevHillshadeParams = state.hillshadeParams
+    prevCurvatureType = state.curvatureType
     loadAndRenderDataset(state.currentDataset)
   } else if (state.activeTerrainLayer !== prevLayer) {
     prevLayer = state.activeTerrainLayer
     prevSlopeUnit = state.slopeUnit
     prevHillshadeParams = state.hillshadeParams
+    prevCurvatureType = state.curvatureType
     renderActiveLayer()
   } else if (
     state.activeTerrainLayer === TerrainLayer.Slope &&
@@ -159,6 +169,12 @@ appState.subscribe((state) => {
     state.hillshadeParams !== prevHillshadeParams
   ) {
     prevHillshadeParams = state.hillshadeParams
+    renderActiveLayer()
+  } else if (
+    state.activeTerrainLayer === TerrainLayer.Curvature &&
+    state.curvatureType !== prevCurvatureType
+  ) {
+    prevCurvatureType = state.curvatureType
     renderActiveLayer()
   }
 })

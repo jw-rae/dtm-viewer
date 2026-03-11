@@ -2,6 +2,7 @@ import { TerrainLayer } from '../types/index.js'
 import type { SlopeUnit } from '../types/index.js'
 import type { HillshadeParams } from '../renderer/HillshadeService.js'
 import { DEFAULT_HILLSHADE_PARAMS } from '../renderer/HillshadeService.js'
+import type { CurvatureType } from '../renderer/CurvatureService.js'
 import { DEFAULT_DATASET_ID } from '../data/datasets.js'
 import { DEFAULT_BASEMAP_ID } from '../data/basemaps.js'
 
@@ -14,6 +15,7 @@ export interface AppState {
     elevationRange: { min: number; max: number } | null
     slopeUnit: SlopeUnit
     hillshadeParams: HillshadeParams
+    curvatureType: CurvatureType
 }
 
 type Listener = (state: Readonly<AppState>) => void
@@ -32,6 +34,7 @@ class AppStateManager {
             elevationRange: null,
             slopeUnit: 'degree',
             hillshadeParams: { ...DEFAULT_HILLSHADE_PARAMS },
+            curvatureType: 'standard',
         }
     }
 

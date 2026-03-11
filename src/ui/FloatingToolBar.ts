@@ -7,6 +7,8 @@ import { SLOPE_GRADIENT_CSS } from '../renderer/SlopeService.js'
 import { ASPECT_CONIC_CSS, ASPECT_LINEAR_CSS } from '../renderer/AspectService.js'
 import type { HillshadeParams } from '../renderer/HillshadeService.js'
 import { sunPositionToAngles } from '../renderer/HillshadeService.js'
+import type { CurvatureType } from '../renderer/CurvatureService.js'
+import { CURVATURE_GRADIENT_CSS } from '../renderer/CurvatureService.js'
 
 interface ToolConfig {
     layer: TerrainLayer
@@ -56,8 +58,8 @@ const TOOLS: ToolConfig[] = [
         layer: TerrainLayer.Curvature,
         label: 'Curvature',
         iconName: 'activity',
-        description: 'Second derivative of elevation, showing surface convexity and concavity. Highlights ridges, valleys, and saddle points.',
-        implemented: false,
+        description: 'Second spatial derivative of elevation. Convex surfaces (ridges) are positive, concave surfaces (valleys) are negative, flat areas are zero.',
+        implemented: true,
     },
 ]
 
@@ -449,6 +451,70 @@ function buildPopupContent(layer: TerrainLayer, popup: HTMLElement): void {
         techSection.append(shadowRow)
         popup.append(techSection)
     }
+
+    if (layer === TerrainLayer.Curvature) {
+        // ── Curvature type selector
+        const divider1 = document.createElement('div')
+        divider1.className = 'tool-popup__divider'
+        popup.append(divider1)
+
+        const typeSection = document.createElement('div')
+        typeSection.className = 'tool-popup__section'
+        const typeTitle = document.createElement('div')
+        typeTitle.className = 'tool-popup__section-title'
+        typeTitle.textContent = 'Curvature Type'
+        typeSection.append(typeTitle)
+
+        const seg = document.createElement('div')
+        seg.className = 'tool-popup__seg'
+
+        const options: { value: CurvatureType; label: string; tip: string }[] = [
+            { value: 'standard', label: 'Standard',  tip: 'Combined curvature — sum of profile and plan.' },
+            { value: 'profile',  label: 'Profile',   tip: 'Along the slope direction. Positive = accelerating flow (convex); negative = decelerating (concave).' },
+            { value: 'plan',     label: 'Plan',       tip: 'Perpendicular to the slope. Positive = converging flow; negative = diverging.' },
+        ]
+
+        for (const opt of options) {
+            const btn = document.createElement('button')
+            btn.type = 'button'
+            btn.className = 'tool-popup__seg-btn'
+            btn.textContent = opt.label
+            btn.title = opt.tip
+            if (appState.state.curvatureType === opt.value) btn.classList.add('is-active')
+            btn.addEventListener('click', () => {
+                seg.querySelectorAll('.tool-popup__seg-btn').forEach(b => b.classList.remove('is-active'))
+                btn.classList.add('is-active')
+                appState.update({ curvatureType: opt.value })
+            })
+            seg.append(btn)
+        }
+
+        typeSection.append(seg)
+        popup.append(typeSection)
+
+        // ── Legend
+        const divider2 = document.createElement('div')
+        divider2.className = 'tool-popup__divider'
+        popup.append(divider2)
+
+        const legendSection = document.createElement('div')
+        legendSection.className = 'tool-popup__section'
+        const legendTitle = document.createElement('div')
+        legendTitle.className = 'tool-popup__section-title'
+        legendTitle.textContent = 'Legend'
+        const gradBar = document.createElement('div')
+        gradBar.className = 'tool-popup__gradient'
+        gradBar.style.background = CURVATURE_GRADIENT_CSS
+        const gradLabels = document.createElement('div')
+        gradLabels.className = 'tool-popup__gradient-labels tool-popup__gradient-labels--3'
+        for (const txt of ['Concave (−)', 'Flat (0)', 'Convex (+)']) {
+            const s = document.createElement('span')
+            s.textContent = txt
+            gradLabels.append(s)
+        }
+        legendSection.append(legendTitle, gradBar, gradLabels)
+        popup.append(legendSection)
+    }
 }
 
 export function createFloatingToolBar(): HTMLElement {
@@ -508,6 +574,7 @@ export function createFloatingToolBar(): HTMLElement {
     let prevActiveLayerForPopup = appState.state.activeTerrainLayer
     let prevElevRange = appState.state.elevationRange
     let prevSlopeUnit = appState.state.slopeUnit
+    let prevCurvType = appState.state.curvatureType
 
     appState.subscribe((state) => {
         buttons.forEach((btn, i) => {
@@ -519,7 +586,8 @@ export function createFloatingToolBar(): HTMLElement {
             const needsRebuild =
                 state.activeTerrainLayer !== prevActiveLayerForPopup ||
                 state.elevationRange !== prevElevRange ||
-                state.slopeUnit !== prevSlopeUnit
+                state.slopeUnit !== prevSlopeUnit ||
+                state.curvatureType !== prevCurvType
             if (needsRebuild) {
                 buildPopupContent(state.activeTerrainLayer, popup)
             }
@@ -527,6 +595,7 @@ export function createFloatingToolBar(): HTMLElement {
         prevActiveLayerForPopup = state.activeTerrainLayer
         prevElevRange = state.elevationRange
         prevSlopeUnit = state.slopeUnit
+        prevCurvType = state.curvatureType
     })
 
     // Close popup when clicking outside the wrapper

@@ -550,6 +550,206 @@ body {
     color: var(--color-text-inverse);
 }
 
+/* ── Aspect compass rose ───────────────────────────────────────────────────── */
+
+.tool-popup__aspect-rose {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border-primary);
+    align-self: center;
+    margin: 0 auto;
+    box-shadow: var(--shadow-md);
+}
+
+.tool-popup__aspect-cardinals {
+    position: relative;
+    width: 88px;
+    height: 20px;
+    margin: var(--space-xs) auto 0;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+}
+
+.tool-popup__cardinal {
+    position: absolute;
+    line-height: 1;
+}
+
+.tool-popup__cardinal--n { left: 50%; transform: translateX(-50%); top: 0; }
+.tool-popup__cardinal--s { left: 50%; transform: translateX(-50%); bottom: 0; }
+.tool-popup__cardinal--w { left: 0; top: 50%; transform: translateY(-50%); }
+.tool-popup__cardinal--e { right: 0; top: 50%; transform: translateY(-50%); }
+
+.tool-popup__flat-note {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    font-style: italic;
+    margin-top: var(--space-xs);
+}
+
+/* ── Hillshade slider controls ─────────────────────────────────────────────── */
+
+.tool-popup__slider-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    row-gap: 2px;
+    column-gap: var(--space-sm);
+}
+
+.tool-popup__slider-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    align-self: center;
+}
+
+.tool-popup__slider-value {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-brand-primary-500);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    align-self: center;
+    min-width: 36px;
+}
+
+.tool-popup__slider {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--color-border-primary);
+    border-radius: var(--border-radius-full);
+    outline: none;
+    cursor: pointer;
+}
+
+.tool-popup__slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-brand-primary-500);
+    border: 2px solid var(--color-surface-elevated);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: background var(--duration-200) var(--ease-out);
+}
+
+.tool-popup__slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-brand-primary-500);
+    border: 2px solid var(--color-surface-elevated);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+}
+
+/* ── Shadow toggle switch ──────────────────────────────────────────────────── */
+
+.tool-popup__toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--space-xs);
+}
+
+.tool-popup__toggle-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.tool-popup__toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.tool-popup__toggle-track {
+    display: block;
+    width: 36px;
+    height: 20px;
+    border-radius: var(--border-radius-full);
+    background: var(--color-border-primary);
+    transition: background var(--duration-200) var(--ease-out);
+}
+
+.tool-popup__toggle.is-on .tool-popup__toggle-track {
+    background: var(--color-brand-primary-500);
+}
+
+.tool-popup__toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-surface-elevated);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--duration-200) var(--ease-out);
+}
+
+.tool-popup__toggle.is-on .tool-popup__toggle-thumb {
+    transform: translateX(16px);
+}
+
+/* ── Sun arc SVG (hillshade popup) ────────────────────────────────────────── */
+
+.sun-arc__horizon {
+    stroke: var(--color-border-primary);
+    stroke-width: 1;
+}
+
+.sun-arc__arc-path {
+    fill: none;
+    stroke: var(--color-border-primary);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+}
+
+.sun-arc__tick {
+    stroke: var(--color-border-primary);
+    stroke-width: 1;
+}
+
+.sun-arc__label {
+    fill: var(--color-text-tertiary);
+    font-size: 10px;
+    font-family: var(--font-family-sans);
+}
+
+.sun-arc__glow {
+    fill: #f97316;
+    opacity: 0.22;
+}
+
+.sun-arc__sun {
+    fill: #f97316;
+    stroke: #fff7ed;
+    stroke-width: 1.5;
+}
+
+.tool-popup__sun-computed {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    margin-top: var(--space-xs);
+}
+
 /* ── Basemap selector ──────────────────────────────────────────────────────── */
 
 .basemap-selector {

@@ -9,6 +9,8 @@ import { loadTerrain } from './renderer/TerrainLoader.js'
 import { createBBoxLayer } from './renderer/TerrainRenderer.js'
 import { renderGreyscaleHeightMap, createHeightMapLayer } from './renderer/HeightMapService.js'
 import { computeSlope, renderSlopeMap, createSlopeLayer } from './renderer/SlopeService.js'
+import { computeAspect, renderAspectMap, createAspectLayer } from './renderer/AspectService.js'
+import { computeHillshade, renderHillshadeMap, createHillshadeLayer } from './renderer/HillshadeService.js'
 import { appState } from './state/AppState.js'
 import { DATASETS } from './data/datasets.js'
 import { TerrainLayer } from './types/index.js'
@@ -60,7 +62,7 @@ function renderActiveLayer(): void {
 
   removeTerrainLayer()
 
-  const { activeTerrainLayer, slopeUnit } = appState.state
+  const { activeTerrainLayer, slopeUnit, hillshadeParams } = appState.state
   if (activeTerrainLayer === TerrainLayer.HeightMap) {
     const canvas = renderGreyscaleHeightMap(cachedGrid)
     const layer = createHeightMapLayer(canvas, cachedBounds)
@@ -72,8 +74,20 @@ function renderActiveLayer(): void {
     const layer = createSlopeLayer(canvas, cachedBounds)
     map.addLayer(layer)
     terrainLayer = layer
+  } else if (activeTerrainLayer === TerrainLayer.Aspect) {
+    const aspectData = computeAspect(cachedGrid)
+    const canvas = renderAspectMap(aspectData, cachedGrid.width, cachedGrid.height)
+    const layer = createAspectLayer(canvas, cachedBounds)
+    map.addLayer(layer)
+    terrainLayer = layer
+  } else if (activeTerrainLayer === TerrainLayer.Hillshade) {
+    const hsData = computeHillshade(cachedGrid, cachedBounds, hillshadeParams)
+    const canvas = renderHillshadeMap(hsData, cachedGrid.width, cachedGrid.height)
+    const layer = createHillshadeLayer(canvas, cachedBounds)
+    map.addLayer(layer)
+    terrainLayer = layer
   }
-  // Other layers (Hillshade, Contour, Aspect, Curvature) added in later steps.
+  // Other layers (Contour, Curvature) added in later steps.
 }
 
 async function loadAndRenderDataset(datasetId: string): Promise<void> {
@@ -121,21 +135,30 @@ if (initialDataset) {
 let prevDataset = appState.state.currentDataset
 let prevLayer = appState.state.activeTerrainLayer
 let prevSlopeUnit = appState.state.slopeUnit
+let prevHillshadeParams = appState.state.hillshadeParams
 appState.subscribe((state) => {
   if (state.currentDataset !== prevDataset) {
     prevDataset = state.currentDataset
     prevLayer = state.activeTerrainLayer
     prevSlopeUnit = state.slopeUnit
+    prevHillshadeParams = state.hillshadeParams
     loadAndRenderDataset(state.currentDataset)
   } else if (state.activeTerrainLayer !== prevLayer) {
     prevLayer = state.activeTerrainLayer
     prevSlopeUnit = state.slopeUnit
+    prevHillshadeParams = state.hillshadeParams
     renderActiveLayer()
   } else if (
     state.activeTerrainLayer === TerrainLayer.Slope &&
     state.slopeUnit !== prevSlopeUnit
   ) {
     prevSlopeUnit = state.slopeUnit
+    renderActiveLayer()
+  } else if (
+    state.activeTerrainLayer === TerrainLayer.Hillshade &&
+    state.hillshadeParams !== prevHillshadeParams
+  ) {
+    prevHillshadeParams = state.hillshadeParams
     renderActiveLayer()
   }
 })

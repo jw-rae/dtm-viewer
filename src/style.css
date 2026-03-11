@@ -1,0 +1,622 @@
+/*
+ * ── Global styles ──────────────────────────────────────────────────────────────
+ *
+ * @jwrae/design-tokens is imported in main.ts.
+ * ALL visual values reference design tokens — no raw CSS values.
+ */
+
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body,
+#app {
+    height: 100%;
+}
+
+body {
+    font-family: var(--font-family-sans);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    /* Prevent page scroll — map fills the entire viewport */
+    overflow: hidden;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.header {
+    flex-shrink: 0;
+    height: var(--space-2xl);
+    background: var(--color-surface-primary);
+    border-bottom: 1px solid var(--color-border-primary);
+    z-index: var(--z-index-50);
+}
+
+.header-container {
+    height: 100%;
+    padding: 0 var(--space-xl);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-lg);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-width: 0;
+}
+
+.header-logo {
+    flex-shrink: 0;
+    color: var(--color-brand-primary-500);
+}
+
+.header-brand {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.header-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: var(--line-height-tight);
+}
+
+.header-subtitle {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: var(--line-height-tight);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-shrink: 0;
+}
+
+.header-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--color-border-primary);
+    flex-shrink: 0;
+}
+
+/* ── Dataset selector ───────────────────────────────────────────────────────── */
+
+.dataset-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.dataset-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.dataset-select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.dataset-select {
+    appearance: none;
+    background: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    padding: var(--space-xs) var(--space-lg) var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    font-family: var(--font-family-sans);
+    cursor: pointer;
+    height: 34px;
+    transition: border-color var(--duration-200) var(--ease-out);
+}
+
+.dataset-select:hover {
+    border-color: var(--color-border-interactive);
+}
+
+.dataset-select:focus {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-primary-500) 20%, transparent);
+}
+
+.dataset-select-chevron {
+    position: absolute;
+    right: var(--space-xs);
+    pointer-events: none;
+    color: var(--color-text-tertiary);
+}
+
+/* ── Theme controls ─────────────────────────────────────────────────────────── */
+
+.controls-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.theme-toggle,
+.theme-selector-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-radius: var(--border-radius-md);
+    transition:
+        background var(--duration-200) var(--ease-out),
+        color var(--duration-200) var(--ease-out);
+}
+
+.theme-toggle:hover,
+.theme-selector-toggle:hover {
+    background: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+}
+
+.theme-selector {
+    position: relative;
+}
+
+.theme-menu {
+    position: absolute;
+    top: calc(100% + var(--space-xs));
+    right: 0;
+    min-width: 160px;
+    background: var(--color-surface-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-xs);
+    z-index: var(--z-index-50);
+    animation: themeFadeIn var(--duration-200) var(--ease-out);
+}
+
+.theme-menu.theme-menu--hidden {
+    display: none;
+}
+
+@keyframes themeFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.theme-menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border: none;
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    font-family: var(--font-family-sans);
+    text-align: left;
+    cursor: pointer;
+    border-radius: var(--border-radius-md);
+    transition: background var(--duration-200) var(--ease-out);
+}
+
+.theme-menu-item:hover {
+    background: var(--color-surface-secondary);
+}
+
+.theme-menu-item.is-active {
+    background: var(--color-surface-secondary);
+    color: var(--color-brand-primary-500);
+}
+
+.theme-color-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: var(--border-radius-full);
+    border: 2px solid var(--color-border-primary);
+    flex-shrink: 0;
+}
+
+.theme-name {
+    flex: 1;
+}
+
+/* ── Map container ─────────────────────────────────────────────────────────── */
+
+.map-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    /* Required so flex child can shrink below its natural height */
+    min-height: 0;
+}
+
+.map-canvas {
+    width: 100%;
+    height: 100%;
+    /* Neutral background fills the gap between tiles — prevents white flash */
+    background: var(--color-neutral-300);
+}
+
+[data-color-scheme='dark'] .map-canvas {
+    background: var(--color-neutral-800);
+}
+
+.map-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.map-placeholder__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.map-placeholder__icon {
+    color: var(--color-text-tertiary);
+    opacity: 0.35;
+}
+
+.map-placeholder__text {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-tertiary);
+    letter-spacing: var(--letter-spacing-widest);
+    text-transform: uppercase;
+}
+
+/* ── Loading overlay ───────────────────────────────────────────────────────── */
+
+#map-loading {
+    position: absolute;
+    inset: 0;
+    display: none;
+    /* shown via JS */
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-surface-primary) 70%, transparent);
+    backdrop-filter: blur(2px);
+    z-index: var(--z-index-20);
+}
+
+.map-loading__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-border-primary);
+    border-top-color: var(--color-brand-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.map-loading__label {
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    letter-spacing: var(--letter-spacing-widest);
+    text-transform: uppercase;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Floating toolbar ──────────────────────────────────────────────────────── */
+
+.floating-toolbar {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-xs);
+    z-index: var(--z-index-10);
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-xl);
+    padding: var(--space-xs);
+    box-shadow: var(--shadow-lg);
+}
+
+.tool-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-radius: var(--border-radius-lg);
+    transition:
+        background var(--duration-200) var(--ease-out),
+        color var(--duration-200) var(--ease-out);
+}
+
+.tool-button:hover {
+    background: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+}
+
+.tool-button.is-active {
+    background: var(--color-brand-primary-500);
+    color: var(--color-text-inverse);
+}
+
+.tool-button.is-active:hover {
+    background: var(--color-brand-primary-600);
+}
+
+/* ── Basemap selector ──────────────────────────────────────────────────────── */
+
+.basemap-selector {
+    position: absolute;
+    bottom: var(--space-md);
+    left: var(--space-md);
+    z-index: var(--z-index-10);
+}
+
+.basemap-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    height: 34px;
+    padding: 0 var(--space-sm);
+    background: var(--color-surface-elevated);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    font-family: var(--font-family-sans);
+    transition:
+        background var(--duration-200) var(--ease-out),
+        border-color var(--duration-200) var(--ease-out);
+}
+
+.basemap-toggle:hover {
+    background: var(--color-surface-secondary);
+    border-color: var(--color-border-interactive);
+}
+
+.basemap-toggle__label {
+    max-width: 96px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.basemap-toggle__chevron {
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+}
+
+.basemap-menu {
+    position: absolute;
+    bottom: calc(100% + var(--space-xs));
+    left: 0;
+    min-width: 160px;
+    background: var(--color-surface-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-xs);
+    z-index: var(--z-index-50);
+    animation: basemapFadeIn var(--duration-200) var(--ease-out);
+}
+
+.basemap-menu.basemap-menu--hidden {
+    display: none;
+}
+
+@keyframes basemapFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.basemap-menu__title {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wider);
+    padding: var(--space-xs) var(--space-sm) var(--space-xs);
+}
+
+.basemap-item {
+    display: block;
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border: none;
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    font-family: var(--font-family-sans);
+    text-align: left;
+    cursor: pointer;
+    border-radius: var(--border-radius-md);
+    transition: background var(--duration-200) var(--ease-out);
+}
+
+.basemap-item:hover {
+    background: var(--color-surface-secondary);
+}
+
+.basemap-item.is-active {
+    background: var(--color-surface-secondary);
+    color: var(--color-brand-primary-500);
+}
+
+/* ── OpenLayers control overrides ──────────────────────────────────────────────
+ * ol/ol.css is imported in main.ts. These rules override the OL defaults so
+ * zoom buttons and attribution use design tokens and match the app aesthetic.
+ * All values reference tokens — no raw values. */
+
+/* Zoom control — top-left, clear of the floating toolbar top-right */
+.ol-zoom {
+    top: var(--space-md);
+    left: var(--space-md);
+    bottom: auto;
+    right: auto;
+    background: transparent;
+    padding: 0;
+}
+
+.ol-zoom .ol-zoom-in,
+.ol-zoom .ol-zoom-out {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: var(--color-surface-elevated);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-light);
+    cursor: pointer;
+    transition:
+        background var(--duration-200) var(--ease-out),
+        border-color var(--duration-200) var(--ease-out);
+    line-height: 1;
+}
+
+.ol-zoom .ol-zoom-in {
+    margin-bottom: var(--space-xs);
+}
+
+.ol-zoom .ol-zoom-in:hover,
+.ol-zoom .ol-zoom-out:hover {
+    background: var(--color-surface-secondary);
+    border-color: var(--color-border-interactive);
+}
+
+/* Attribution — bottom-right, compact and token-styled */
+.ol-attribution {
+    bottom: var(--space-xs);
+    right: var(--space-xs);
+    left: auto;
+    top: auto;
+    background: transparent;
+    padding: 0;
+}
+
+.ol-attribution ul {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    margin: 0;
+    list-style: none;
+    max-width: 420px;
+}
+
+.ol-attribution ul li {
+    display: inline;
+}
+
+.ol-attribution a {
+    color: var(--color-text-link);
+    text-decoration: none;
+}
+
+.ol-attribution a:hover {
+    color: var(--color-text-link-hover);
+    text-decoration: underline;
+}
+
+.ol-attribution button {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    color: var(--color-text-secondary);
+    width: 24px;
+    height: 24px;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* OL canvas — ensure it fills the map div and carries the crossfade transition */
+.ol-viewport {
+    width: 100% !important;
+    height: 100% !important;
+    /* Matches .map-canvas so there's never a differently-coloured stripe */
+    background: var(--color-neutral-300);
+}
+
+[data-color-scheme='dark'] .ol-viewport {
+    background: var(--color-neutral-800);
+}
+
+/* Smooth opacity crossfade on basemap layer swap (duration matches SWAP_DURATION_MS) */
+.ol-layer canvas {
+    transition: opacity 300ms ease;
+}

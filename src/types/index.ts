@@ -9,6 +9,10 @@ export enum TerrainLayer {
     Curvature = 'curvature',
 }
 
+// ── Slope units ────────────────────────────────────────────────────────────────
+
+export type SlopeUnit = 'degree' | 'percent'
+
 // ── Dataset ────────────────────────────────────────────────────────────────────
 
 export interface TerrainDataset {

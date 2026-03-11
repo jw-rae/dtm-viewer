@@ -8,6 +8,7 @@ import { initMap, getMap, flyTo } from './renderer/MapEngine.js'
 import { loadTerrain } from './renderer/TerrainLoader.js'
 import { createBBoxLayer } from './renderer/TerrainRenderer.js'
 import { renderGreyscaleHeightMap, createHeightMapLayer } from './renderer/HeightMapService.js'
+import { computeSlope, renderSlopeMap, createSlopeLayer } from './renderer/SlopeService.js'
 import { appState } from './state/AppState.js'
 import { DATASETS } from './data/datasets.js'
 import { TerrainLayer } from './types/index.js'
@@ -59,14 +60,20 @@ function renderActiveLayer(): void {
 
   removeTerrainLayer()
 
-  const { activeTerrainLayer } = appState.state
+  const { activeTerrainLayer, slopeUnit } = appState.state
   if (activeTerrainLayer === TerrainLayer.HeightMap) {
     const canvas = renderGreyscaleHeightMap(cachedGrid)
     const layer = createHeightMapLayer(canvas, cachedBounds)
     map.addLayer(layer)
     terrainLayer = layer
+  } else if (activeTerrainLayer === TerrainLayer.Slope) {
+    const slopeGrid = computeSlope(cachedGrid, cachedBounds, slopeUnit)
+    const canvas = renderSlopeMap(slopeGrid)
+    const layer = createSlopeLayer(canvas, cachedBounds)
+    map.addLayer(layer)
+    terrainLayer = layer
   }
-  // Other layers (Hillshade, Contour, Slope, Aspect, Curvature) added in later steps.
+  // Other layers (Hillshade, Contour, Aspect, Curvature) added in later steps.
 }
 
 async function loadAndRenderDataset(datasetId: string): Promise<void> {
@@ -113,13 +120,22 @@ if (initialDataset) {
 
 let prevDataset = appState.state.currentDataset
 let prevLayer = appState.state.activeTerrainLayer
+let prevSlopeUnit = appState.state.slopeUnit
 appState.subscribe((state) => {
   if (state.currentDataset !== prevDataset) {
     prevDataset = state.currentDataset
     prevLayer = state.activeTerrainLayer
+    prevSlopeUnit = state.slopeUnit
     loadAndRenderDataset(state.currentDataset)
   } else if (state.activeTerrainLayer !== prevLayer) {
     prevLayer = state.activeTerrainLayer
+    prevSlopeUnit = state.slopeUnit
+    renderActiveLayer()
+  } else if (
+    state.activeTerrainLayer === TerrainLayer.Slope &&
+    state.slopeUnit !== prevSlopeUnit
+  ) {
+    prevSlopeUnit = state.slopeUnit
     renderActiveLayer()
   }
 })

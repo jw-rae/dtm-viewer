@@ -507,6 +507,49 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* 3-stop labels: start, centre, end */
+.tool-popup__gradient-labels--3 span:nth-child(2) {
+    text-align: center;
+}
+
+/* ── Segmented unit control (inside popup) ─────────────────────────────────── */
+
+.tool-popup__seg {
+    display: flex;
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+}
+
+.tool-popup__seg-btn {
+    flex: 1;
+    padding: var(--space-xs) var(--space-sm);
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    font-family: var(--font-family-sans);
+    cursor: pointer;
+    transition:
+        background var(--duration-200) var(--ease-out),
+        color var(--duration-200) var(--ease-out);
+}
+
+.tool-popup__seg-btn + .tool-popup__seg-btn {
+    border-left: 1px solid var(--color-border-primary);
+}
+
+.tool-popup__seg-btn:hover:not(.is-active) {
+    background: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+}
+
+.tool-popup__seg-btn.is-active {
+    background: var(--color-brand-primary-500);
+    color: var(--color-text-inverse);
+}
+
 /* ── Basemap selector ──────────────────────────────────────────────────────── */
 
 .basemap-selector {

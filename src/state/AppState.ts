@@ -1,4 +1,5 @@
 import { TerrainLayer } from '../types/index.js'
+import type { SlopeUnit } from '../types/index.js'
 import { DEFAULT_DATASET_ID } from '../data/datasets.js'
 import { DEFAULT_BASEMAP_ID } from '../data/basemaps.js'
 
@@ -9,6 +10,7 @@ export interface AppState {
     theme: string
     colorScheme: 'light' | 'dark'
     elevationRange: { min: number; max: number } | null
+    slopeUnit: SlopeUnit
 }
 
 type Listener = (state: Readonly<AppState>) => void
@@ -25,6 +27,7 @@ class AppStateManager {
             theme: localStorage.getItem('dtm-theme') ?? 'blue',
             colorScheme: (localStorage.getItem('dtm-color-scheme') ?? 'light') as 'light' | 'dark',
             elevationRange: null,
+            slopeUnit: 'degree',
         }
     }
 

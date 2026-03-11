@@ -1,7 +1,9 @@
 import { appState } from '../state/AppState.js'
 import { TerrainLayer } from '../types/index.js'
+import type { SlopeUnit } from '../types/index.js'
 import { icon } from './icons.js'
 import type { IconName } from './icons.js'
+import { SLOPE_GRADIENT_CSS } from '../renderer/SlopeService.js'
 
 interface ToolConfig {
     layer: TerrainLayer
@@ -37,8 +39,8 @@ const TOOLS: ToolConfig[] = [
         layer: TerrainLayer.Slope,
         label: 'Slope',
         iconName: 'trending_up',
-        description: 'Rate of elevation change per unit distance. Steeper gradients highlight terrain severity and runoff risk.',
-        implemented: false,
+        description: 'Rate of elevation change per unit distance computed with Horn\'s 3×3 finite-difference method. Steeper gradients highlight terrain severity and runoff risk.',
+        implemented: true,
     },
     {
         layer: TerrainLayer.Aspect,
@@ -128,6 +130,71 @@ function buildPopupContent(layer: TerrainLayer, popup: HTMLElement): void {
         labels.append(minLabel, maxLabel)
         section.append(sectionTitle, gradient, labels)
         popup.append(section)
+    }
+
+    // Slope — unit toggle + colour palette legend
+    if (layer === TerrainLayer.Slope) {
+        const divider2 = document.createElement('div')
+        divider2.className = 'tool-popup__divider'
+        popup.append(divider2)
+
+        // Unit segmented control
+        const unitSection = document.createElement('div')
+        unitSection.className = 'tool-popup__section'
+
+        const unitTitle = document.createElement('div')
+        unitTitle.className = 'tool-popup__section-title'
+        unitTitle.textContent = 'Measurement'
+
+        const seg = document.createElement('div')
+        seg.className = 'tool-popup__seg'
+
+        const unitOptions: Array<{ unit: SlopeUnit; label: string }> = [
+            { unit: 'degree',  label: 'Degrees' },
+            { unit: 'percent', label: '% Rise' },
+        ]
+        for (const opt of unitOptions) {
+            const btn = document.createElement('button')
+            btn.type = 'button'
+            btn.className = 'tool-popup__seg-btn'
+            btn.textContent = opt.label
+            if (appState.state.slopeUnit === opt.unit) btn.classList.add('is-active')
+            btn.addEventListener('click', () => appState.update({ slopeUnit: opt.unit }))
+            seg.append(btn)
+        }
+        unitSection.append(unitTitle, seg)
+        popup.append(unitSection)
+
+        // Colour legend
+        const divider3 = document.createElement('div')
+        divider3.className = 'tool-popup__divider'
+        popup.append(divider3)
+
+        const legendSection = document.createElement('div')
+        legendSection.className = 'tool-popup__section'
+
+        const legendTitle = document.createElement('div')
+        legendTitle.className = 'tool-popup__section-title'
+        legendTitle.textContent = 'Slope Legend'
+
+        const gradient = document.createElement('div')
+        gradient.className = 'tool-popup__gradient'
+        gradient.style.background = SLOPE_GRADIENT_CSS
+
+        const labels = document.createElement('div')
+        labels.className = 'tool-popup__gradient-labels tool-popup__gradient-labels--3'
+        const isDeg = appState.state.slopeUnit === 'degree'
+        const [l0, lMid, lMax] = isDeg
+            ? ['0°', '45°', '90°']
+            : ['0%', '100%', '\u221e']
+        for (const txt of [l0, lMid, lMax]) {
+            const s = document.createElement('span')
+            s.textContent = txt
+            labels.append(s)
+        }
+
+        legendSection.append(legendTitle, gradient, labels)
+        popup.append(legendSection)
     }
 }
 

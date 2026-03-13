@@ -3,7 +3,6 @@
 export enum TerrainLayer {
     HeightMap = 'heightmap',
     Hillshade = 'hillshade',
-    Contour = 'contour',
     Slope = 'slope',
     Aspect = 'aspect',
     Curvature = 'curvature',

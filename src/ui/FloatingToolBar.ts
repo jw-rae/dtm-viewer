@@ -34,13 +34,6 @@ const TOOLS: ToolConfig[] = [
         implemented: true,
     },
     {
-        layer: TerrainLayer.Contour,
-        label: 'Contour Lines',
-        iconName: 'layers',
-        description: 'Isolines connecting points of equal elevation. The spacing between lines indicates terrain steepness.',
-        implemented: false,
-    },
-    {
         layer: TerrainLayer.Slope,
         label: 'Slope',
         iconName: 'trending_up',
@@ -155,7 +148,7 @@ function buildPopupContent(layer: TerrainLayer, popup: HTMLElement): void {
         seg.className = 'tool-popup__seg'
 
         const unitOptions: Array<{ unit: SlopeUnit; label: string }> = [
-            { unit: 'degree',  label: 'Degrees' },
+            { unit: 'degree', label: 'Degrees' },
             { unit: 'percent', label: '% Rise' },
         ]
         for (const opt of unitOptions) {
@@ -306,9 +299,9 @@ function buildPopupContent(layer: TerrainLayer, popup: HTMLElement): void {
             el.textContent = txt
             return el
         }
-        const eLabel  = svgText('10',  '113', 'E', 'middle')
-        const sLabel  = svgText('100',  '14', 'S', 'middle')
-        const wLabel  = svgText('190', '113', 'W', 'middle')
+        const eLabel = svgText('10', '113', 'E', 'middle')
+        const sLabel = svgText('100', '14', 'S', 'middle')
+        const wLabel = svgText('190', '113', 'W', 'middle')
 
         // Sun glow + dot (rendered last so they sit on top)
         const glow = document.createElementNS(SVG_NS, 'circle')
@@ -469,9 +462,9 @@ function buildPopupContent(layer: TerrainLayer, popup: HTMLElement): void {
         seg.className = 'tool-popup__seg'
 
         const options: { value: CurvatureType; label: string; tip: string }[] = [
-            { value: 'standard', label: 'Standard',  tip: 'Combined curvature — sum of profile and plan.' },
-            { value: 'profile',  label: 'Profile',   tip: 'Along the slope direction. Positive = accelerating flow (convex); negative = decelerating (concave).' },
-            { value: 'plan',     label: 'Plan',       tip: 'Perpendicular to the slope. Positive = converging flow; negative = diverging.' },
+            { value: 'standard', label: 'Standard', tip: 'Combined curvature — sum of profile and plan.' },
+            { value: 'profile', label: 'Profile', tip: 'Along the slope direction. Positive = accelerating flow (convex); negative = decelerating (concave).' },
+            { value: 'plan', label: 'Plan', tip: 'Perpendicular to the slope. Positive = converging flow; negative = diverging.' },
         ]
 
         for (const opt of options) {

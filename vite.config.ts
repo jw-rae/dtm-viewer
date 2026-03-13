@@ -1,9 +1,9 @@
 import { defineConfig } from 'vite'
 
-export default defineConfig(({ command }) => ({
-    base: command === 'build' ? '/digital-terrain-model-viewer/' : '/',
+export default defineConfig({
+    base: process.env.VITE_BASE ?? '/',
     build: {
         outDir: 'dist',
         sourcemap: true,
     },
-}))
+})

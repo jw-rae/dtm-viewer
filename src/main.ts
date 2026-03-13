@@ -94,7 +94,6 @@ function renderActiveLayer(): void {
     map.addLayer(layer)
     terrainLayer = layer
   }
-  // Other layers (Contour) added in later steps.
 }
 
 async function loadAndRenderDataset(datasetId: string): Promise<void> {

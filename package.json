@@ -6,7 +6,10 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
+        "build:deploy": "tsc && vite build --base=/apps/digital-terrain-model-viewer/",
+        "deploy": "npm run build:deploy && node scripts/deploy.mjs",
         "preview": "vite preview",
+        "preview:deploy": "vite preview --base=/apps/digital-terrain-model-viewer/",
         "typecheck": "tsc --noEmit",
         "postinstall": "node scripts/patch-design-tokens.js"
     },

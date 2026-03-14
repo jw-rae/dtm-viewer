@@ -230,11 +230,9 @@ body {
     position: relative;
     border-right: 1px solid var(--color-border-primary);
     background:
-        linear-gradient(
-            180deg,
+        linear-gradient(180deg,
             color-mix(in srgb, var(--color-surface-elevated) 92%, transparent),
-            color-mix(in srgb, var(--color-surface-primary) 96%, transparent)
-        );
+            color-mix(in srgb, var(--color-surface-primary) 96%, transparent));
     backdrop-filter: blur(10px);
     min-width: 0;
     transition:
@@ -279,15 +277,13 @@ body {
     position: absolute;
     inset: -2px;
     border-radius: inherit;
-    background: conic-gradient(
-        from 0deg,
-        #ff5f6d,
-        #ffd166,
-        #54d48d,
-        #4cc9f0,
-        #7b61ff,
-        #ff5f6d
-    );
+    background: conic-gradient(from 0deg,
+            #ff5f6d,
+            #ffd166,
+            #54d48d,
+            #4cc9f0,
+            #7b61ff,
+            #ff5f6d);
     opacity: 0;
     z-index: 0;
     transition: opacity var(--duration-200) var(--ease-out);
@@ -299,11 +295,9 @@ body {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--color-surface-elevated) 94%, transparent),
-        color-mix(in srgb, var(--color-surface-secondary) 96%, transparent)
-    );
+    background: linear-gradient(180deg,
+            color-mix(in srgb, var(--color-surface-elevated) 94%, transparent),
+            color-mix(in srgb, var(--color-surface-secondary) 96%, transparent));
     z-index: 1;
     pointer-events: none;
 }
@@ -389,23 +383,21 @@ body {
     color: var(--color-brand-primary-600);
     transform: translateX(1px);
     box-shadow:
-    7px 0 14px color-mix(in srgb, var(--color-text-primary) 22%, transparent),
+        7px 0 14px color-mix(in srgb, var(--color-text-primary) 22%, transparent),
         inset 0 1px 0 color-mix(in srgb, var(--color-surface-elevated) 78%, transparent);
 }
 
 .left-panel__collapse-btn:hover::after {
-    background: linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--color-surface-tertiary) 92%, transparent),
-        color-mix(in srgb, var(--color-surface-secondary) 96%, transparent)
-    );
+    background: linear-gradient(180deg,
+            color-mix(in srgb, var(--color-surface-tertiary) 92%, transparent),
+            color-mix(in srgb, var(--color-surface-secondary) 96%, transparent));
 }
 
 .left-panel__collapse-btn:focus-visible {
     outline: none;
     box-shadow:
         0 0 0 2px color-mix(in srgb, var(--color-brand-primary-500) 35%, transparent),
-    7px 0 14px color-mix(in srgb, var(--color-text-primary) 22%, transparent);
+        7px 0 14px color-mix(in srgb, var(--color-text-primary) 22%, transparent);
 }
 
 .left-panel__scroll {
@@ -418,8 +410,7 @@ body {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--color-brand-primary-500) 35%, var(--color-border-primary))
-        color-mix(in srgb, var(--color-surface-secondary) 88%, transparent);
+    scrollbar-color: color-mix(in srgb, var(--color-brand-primary-500) 35%, var(--color-border-primary)) color-mix(in srgb, var(--color-surface-secondary) 88%, transparent);
     padding: var(--space-md) var(--space-md) calc(var(--space-lg) + var(--space-xs));
     display: flex;
     flex-direction: column;
@@ -887,7 +878,7 @@ body {
     transition: background var(--duration-200) var(--ease-out);
 }
 
-.left-panel__seg-btn + .left-panel__seg-btn {
+.left-panel__seg-btn+.left-panel__seg-btn {
     border-left: 1px solid var(--color-border-primary);
 }
 
@@ -1062,7 +1053,7 @@ body {
     white-space: nowrap;
 }
 
-.ol-attribution ul li + li::before {
+.ol-attribution ul li+li::before {
     content: ' | ';
     color: color-mix(in srgb, var(--color-brand-primary-500) 62%, transparent);
 }

@@ -121,13 +121,13 @@ export function computeCurvature(
     for (let row = 1; row < height - 1; row++) {
         for (let col = 1; col < width - 1; col++) {
             const z1 = data[(row - 1) * width + (col - 1)]
-            const z2 = data[(row - 1) * width +  col     ]
+            const z2 = data[(row - 1) * width + col]
             const z3 = data[(row - 1) * width + (col + 1)]
-            const z4 = data[ row      * width + (col - 1)]
-            const z5 = data[ row      * width +  col     ]
-            const z6 = data[ row      * width + (col + 1)]
+            const z4 = data[row * width + (col - 1)]
+            const z5 = data[row * width + col]
+            const z6 = data[row * width + (col + 1)]
             const z7 = data[(row + 1) * width + (col - 1)]
-            const z8 = data[(row + 1) * width +  col     ]
+            const z8 = data[(row + 1) * width + col]
             const z9 = data[(row + 1) * width + (col + 1)]
 
             if (isNoData(z5)) continue
@@ -142,7 +142,7 @@ export function computeCurvature(
             const E = ((r2 + r8) / 2 - z5) / L2
             const F = (-r1 + r3 + r7 - r9) / (4 * L2)
             const G = (-r4 + r6) / (2 * L)
-            const H = (r2  - r8) / (2 * L)
+            const H = (r2 - r8) / (2 * L)
 
             let value: number
 

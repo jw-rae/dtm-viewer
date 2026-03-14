@@ -16,6 +16,96 @@ export interface TerrainLoadResult {
     bounds4326: [number, number, number, number]
 }
 
+// ── URL fallback helpers ──────────────────────────────────────────────────────
+
+function normalizeBasePath(path: string): string {
+    if (!path) return '/'
+    return path.endsWith('/') ? path : `${path}/`
+}
+
+function directoryFromPathname(pathname: string): string {
+    if (!pathname || pathname === '/') return '/'
+    if (pathname.endsWith('/')) return pathname
+
+    const parts = pathname.split('/').filter(Boolean)
+    const lastSegment = parts.length > 0 ? parts[parts.length - 1] : ''
+    if (lastSegment.includes('.')) {
+        const cut = pathname.lastIndexOf('/')
+        return cut >= 0 ? pathname.slice(0, cut + 1) : '/'
+    }
+
+    return `${pathname}/`
+}
+
+function extractFileName(url: string): string | null {
+    try {
+        const candidate = new URL(url, 'https://dtm.local')
+        const parts = candidate.pathname.split('/').filter(Boolean)
+        return parts.length > 0 ? parts[parts.length - 1] : null
+    } catch {
+        return null
+    }
+}
+
+function buildUrlCandidates(url: string): string[] {
+    const candidates = new Set<string>()
+    const fileName = extractFileName(url)
+
+    candidates.add(url)
+
+    if (typeof window === 'undefined') {
+        return [...candidates]
+    }
+
+    const { origin, pathname, href } = window.location
+    const pathBase = normalizeBasePath(directoryFromPathname(pathname))
+    const runtimeBase = normalizeBasePath(import.meta.env.BASE_URL || '/')
+
+    if (url.startsWith('/')) {
+        candidates.add(`${origin}${url}`)
+    }
+
+    if (url.includes('/apps/digital-terrain-model-viewer/')) {
+        candidates.add(url.replace('/apps/digital-terrain-model-viewer/', '/'))
+    }
+
+    if (fileName) {
+        candidates.add(`${origin}${runtimeBase}data/${fileName}`)
+        candidates.add(`${origin}${pathBase}data/${fileName}`)
+
+        const hrefWithSlash = href.endsWith('/') ? href : `${href}/`
+        candidates.add(new URL(`data/${fileName}`, hrefWithSlash).toString())
+    }
+
+    return [...candidates]
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function openTiffWithFallback(url: string): Promise<any> {
+    const candidates = buildUrlCandidates(url)
+    let lastError: unknown = null
+
+    for (const candidate of candidates) {
+        try {
+            const tiff = await fromUrl(candidate)
+            // Force-read first IFD so HTML fallback responses fail immediately.
+            await tiff.getImage(0)
+            return tiff
+        } catch (error) {
+            lastError = error
+        }
+    }
+
+    throw new Error(
+        [
+            'Failed to load terrain GeoTIFF.',
+            `Original URL: ${url}`,
+            `Tried: ${candidates.join(', ')}`,
+            `Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+        ].join('\n'),
+    )
+}
+
 // ── Overview selection ─────────────────────────────────────────────────────────
 
 /**
@@ -51,7 +141,7 @@ async function pickBestOverview(tiff: any, minW: number): Promise<any> {
 // ── loadTerrain ────────────────────────────────────────────────────────────────
 
 export async function loadTerrain(url: string): Promise<TerrainLoadResult> {
-    const tiff = await fromUrl(url)
+    const tiff = await openTiffWithFallback(url)
 
     // Metadata (CRS, bbox, noData) always comes from the full-res primary image.
     const fullImage = await tiff.getImage(0)

@@ -6,6 +6,7 @@ import type { ElevationGrid } from '../types/index.js'
 // ── Public types ───────────────────────────────────────────────────────────────
 
 export type CurvatureType = 'standard' | 'profile' | 'plan'
+export type CurvatureFeatureMode = 'both' | 'ridges' | 'valleys'
 
 export interface CurvatureResult {
     data: Float32Array
@@ -15,31 +16,63 @@ export interface CurvatureResult {
     clipValue: number
 }
 
+export interface CurvatureRenderOptions {
+    /**
+     * Normalized cutoff in [0, 0.95].
+     * Higher values hide weak curvature and keep only strong ridge/valley lines.
+     */
+    strongFeatureThreshold: number
+    /**
+     * Which curvature sign to display.
+     * ridges = convex (+), valleys = concave (-), both = all strong features.
+     */
+    featureMode: CurvatureFeatureMode
+    /**
+     * Minimum connected component size in pixels.
+     * Removes isolated dots and keeps longer, more coherent linework.
+     */
+    minConnectedPixels: number
+}
+
+export const DEFAULT_CURVATURE_RENDER_OPTIONS: CurvatureRenderOptions = {
+    strongFeatureThreshold: 0.08,
+    featureMode: 'both',
+    minConnectedPixels: 8,
+}
+
+function clampFeatureThreshold(value: number): number {
+    if (!Number.isFinite(value)) return DEFAULT_CURVATURE_RENDER_OPTIONS.strongFeatureThreshold
+    return Math.max(0, Math.min(0.95, value))
+}
+
+function clampConnectedPixels(value: number): number {
+    if (!Number.isFinite(value)) return DEFAULT_CURVATURE_RENDER_OPTIONS.minConnectedPixels
+    return Math.max(1, Math.min(1000, Math.round(value)))
+}
+
 // ── Colour palette ─────────────────────────────────────────────────────────────
-// Diverging blue–white–red: blue = concave (negative), white = flat (0),
-// red = convex (positive). Matches standard GIS curvature symbology.
+// Diverging red–transparent–blue: red = concave (negative),
+// blue = convex (positive), near-flat values are transparent.
 
 /** CSS linear gradient string for the popup legend. */
 export const CURVATURE_GRADIENT_CSS =
-    'linear-gradient(to right, #2166ac, #92c5de, #f7f7f7, #f4a582, #d6604d)'
+    'linear-gradient(to right, #ff3b30 0%, #ff8f86 36%, rgba(255,255,255,0) 50%, #8bc3ff 64%, #0076ff 100%)'
 
 function sampleDiverging(t: number): [number, number, number] {
-    // t in [-1, 1]: -1=blue, 0=white, +1=red
+    // t in [-1, 1]: -1=red (concave), +1=blue (convex)
     if (t < 0) {
-        // blue (#2166ac) → white (#f7f7f7)
-        const f = Math.max(0, Math.min(1, 1 + t))
+        const f = Math.max(0, Math.min(1, Math.abs(t)))
         return [
-            Math.round(33  + f * (247 - 33)),
-            Math.round(102 + f * (247 - 102)),
-            Math.round(172 + f * (247 - 172)),
+            Math.round(255 - f * 15),
+            Math.round(170 - f * 120),
+            Math.round(160 - f * 120),
         ]
     } else {
-        // white (#f7f7f7) → red (#d6604d)
         const f = Math.max(0, Math.min(1, t))
         return [
-            Math.round(247 + f * (214 - 247)),
-            Math.round(247 + f * (96  - 247)),
-            Math.round(247 + f * (77  - 247)),
+            Math.round(140 - f * 120),
+            Math.round(200 - f * 90),
+            255,
         ]
     }
 }
@@ -145,8 +178,81 @@ export function computeCurvature(
 
 // ── renderCurvatureMap ─────────────────────────────────────────────────────────
 
-export function renderCurvatureMap(result: CurvatureResult): HTMLCanvasElement {
+export function renderCurvatureMap(
+    result: CurvatureResult,
+    options: CurvatureRenderOptions = DEFAULT_CURVATURE_RENDER_OPTIONS,
+): HTMLCanvasElement {
     const { data, width, height, clipValue } = result
+    const threshold = clampFeatureThreshold(options.strongFeatureThreshold)
+    const minConnectedPixels = clampConnectedPixels(options.minConnectedPixels)
+    const span = Math.max(0.05, 1 - threshold)
+    const featureMode =
+        options.featureMode === 'ridges' || options.featureMode === 'valleys'
+            ? options.featureMode
+            : 'both'
+
+    const candidateMask = new Uint8Array(data.length)
+    const candidateStrength = new Float32Array(data.length)
+
+    for (let i = 0; i < data.length; i++) {
+        const v = data[i]
+        if (isNaN(v)) continue
+
+        const t = clipValue > 0 ? Math.max(-1, Math.min(1, v / clipValue)) : 0
+        const absT = Math.abs(t)
+        if (absT < threshold) continue
+
+        if (featureMode === 'ridges' && t <= 0) continue
+        if (featureMode === 'valleys' && t >= 0) continue
+
+        const stretched = Math.sign(t) * ((absT - threshold) / span)
+        candidateMask[i] = 1
+        candidateStrength[i] = stretched
+    }
+
+    if (minConnectedPixels > 1) {
+        const visited = new Uint8Array(data.length)
+        const stack: number[] = []
+        const component: number[] = []
+
+        for (let i = 0; i < candidateMask.length; i++) {
+            if (candidateMask[i] === 0 || visited[i] === 1) continue
+
+            stack.push(i)
+            visited[i] = 1
+            component.length = 0
+
+            while (stack.length > 0) {
+                const index = stack.pop()!
+                component.push(index)
+
+                const row = Math.floor(index / width)
+                const col = index - row * width
+
+                for (let dy = -1; dy <= 1; dy++) {
+                    const nr = row + dy
+                    if (nr < 0 || nr >= height) continue
+
+                    for (let dx = -1; dx <= 1; dx++) {
+                        if (dx === 0 && dy === 0) continue
+                        const nc = col + dx
+                        if (nc < 0 || nc >= width) continue
+
+                        const ni = nr * width + nc
+                        if (candidateMask[ni] === 0 || visited[ni] === 1) continue
+                        visited[ni] = 1
+                        stack.push(ni)
+                    }
+                }
+            }
+
+            if (component.length < minConnectedPixels) {
+                for (const index of component) {
+                    candidateMask[index] = 0
+                }
+            }
+        }
+    }
 
     const canvas = document.createElement('canvas')
     canvas.width = width
@@ -157,15 +263,16 @@ export function renderCurvatureMap(result: CurvatureResult): HTMLCanvasElement {
     const px = imgData.data
 
     for (let i = 0; i < data.length; i++) {
-        const v = data[i]
         const o = i * 4
-        if (isNaN(v)) {
+        if (candidateMask[i] === 0) {
             px[o] = 0; px[o + 1] = 0; px[o + 2] = 0; px[o + 3] = 0
             continue
         }
-        const t = clipValue > 0 ? Math.max(-1, Math.min(1, v / clipValue)) : 0
-        const [r, g, b] = sampleDiverging(t)
-        px[o] = r; px[o + 1] = g; px[o + 2] = b; px[o + 3] = 210
+
+        const stretched = candidateStrength[i]
+        const [r, g, b] = sampleDiverging(stretched)
+        const alpha = 190 + Math.round(Math.min(1, Math.abs(stretched)) * 45)
+        px[o] = r; px[o + 1] = g; px[o + 2] = b; px[o + 3] = alpha
     }
 
     ctx.putImageData(imgData, 0, 0)

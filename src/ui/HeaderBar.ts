@@ -36,7 +36,7 @@ function createLeft(): HTMLElement {
 
     const title = document.createElement('span')
     title.className = 'header-title'
-    title.textContent = 'Digital Terrain Model Viewer'
+    title.textContent = 'DTM Viewer'
 
     const subtitle = document.createElement('span')
     subtitle.className = 'header-subtitle'

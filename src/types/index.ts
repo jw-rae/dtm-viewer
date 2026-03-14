@@ -8,6 +8,13 @@ export enum TerrainLayer {
     Curvature = 'curvature',
 }
 
+export interface TerrainLayerState {
+    layer: TerrainLayer
+    enabled: boolean
+    opacity: number
+    expanded: boolean
+}
+
 // ── Slope units ────────────────────────────────────────────────────────────────
 
 export type SlopeUnit = 'degree' | 'percent'

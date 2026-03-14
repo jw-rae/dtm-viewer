@@ -1,80 +1,55 @@
 import { appState } from '../state/AppState.js'
 import { BASEMAPS } from '../data/basemaps.js'
-import { icon } from './icons.js'
+import type { BasemapConfig } from '../data/basemaps.js'
+
+const QUADRANT_BASEMAP_IDS = ['osm', 'satellite', 'topo', 'carto-dark'] as const
+
+const QUADRANT_BASEMAPS: BasemapConfig[] = QUADRANT_BASEMAP_IDS
+    .map((id) => BASEMAPS.find((basemap) => basemap.id === id))
+    .filter((basemap): basemap is BasemapConfig => !!basemap)
 
 export function createBasemapSelector(): HTMLElement {
     const wrapper = document.createElement('div')
-    wrapper.className = 'basemap-selector'
+    wrapper.className = 'basemap-quadrant'
 
-    // Toggle button — shows current basemap label
-    const toggleBtn = document.createElement('button')
-    toggleBtn.className = 'basemap-toggle'
-    toggleBtn.setAttribute('type', 'button')
-    toggleBtn.setAttribute('aria-label', 'Select basemap')
-    toggleBtn.setAttribute('aria-haspopup', 'true')
+    const grid = document.createElement('div')
+    grid.className = 'basemap-quadrant__grid'
 
-    const layersIcon = icon('layers', 14)
-    const labelEl = document.createElement('span')
-    labelEl.className = 'basemap-toggle__label'
+    const buttons = new Map<string, HTMLButtonElement>()
 
-    const chevronIcon = icon('chevron_down', 12)
-    chevronIcon.classList.add('basemap-toggle__chevron')
+    for (const basemap of QUADRANT_BASEMAPS) {
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'basemap-quadrant__tile'
+        button.setAttribute('aria-label', `Use ${basemap.label} basemap`)
+        button.setAttribute('aria-pressed', 'false')
 
-    toggleBtn.append(layersIcon, labelEl, chevronIcon)
+        const thumb = document.createElement('span')
+        thumb.className = 'basemap-quadrant__thumb'
+        thumb.style.backgroundImage = `url("${basemap.thumbnailUrl}")`
 
-    // Menu panel
-    const menu = document.createElement('div')
-    menu.className = 'basemap-menu basemap-menu--hidden'
-    menu.setAttribute('role', 'menu')
+        button.append(thumb)
+        button.addEventListener('click', () => {
+            appState.update({ activeBasemap: basemap.id })
+        })
 
-    const menuTitle = document.createElement('p')
-    menuTitle.className = 'basemap-menu__title'
-    menuTitle.textContent = 'Basemap'
-    menu.append(menuTitle)
-
-    // Populate options
-    const buildMenu = (currentId: string) => {
-        // Clear old buttons, keep the title
-        while (menu.children.length > 1) menu.removeChild(menu.lastChild!)
-
-        for (const bm of BASEMAPS) {
-            const item = document.createElement('button')
-            item.className = 'basemap-item' + (bm.id === currentId ? ' is-active' : '')
-            item.setAttribute('type', 'button')
-            item.setAttribute('role', 'menuitem')
-            item.textContent = bm.label
-            item.addEventListener('click', () => {
-                appState.update({ activeBasemap: bm.id })
-                menu.classList.add('basemap-menu--hidden')
-            })
-            menu.append(item)
-        }
-
-        labelEl.textContent = BASEMAPS.find((b) => b.id === currentId)?.label ?? currentId
+        buttons.set(basemap.id, button)
+        grid.append(button)
     }
 
-    buildMenu(appState.state.activeBasemap)
+    const syncActiveState = (activeBasemap: string): void => {
+        buttons.forEach((button, id) => {
+            const isActive = id === activeBasemap
+            button.classList.toggle('is-active', isActive)
+            button.setAttribute('aria-pressed', String(isActive))
+        })
+    }
 
-    // Toggle panel visibility
-    toggleBtn.addEventListener('click', (e) => {
-        e.stopPropagation()
-        const hidden = menu.classList.contains('basemap-menu--hidden')
-        menu.classList.toggle('basemap-menu--hidden')
-        if (hidden) buildMenu(appState.state.activeBasemap)
-    })
-
-    // Close on outside click
-    document.addEventListener('click', (e) => {
-        if (!wrapper.contains(e.target as Node)) {
-            menu.classList.add('basemap-menu--hidden')
-        }
-    })
-
-    // React to state changes (e.g. programmatic updates in Step 3)
+    syncActiveState(appState.state.activeBasemap)
     appState.subscribe((state) => {
-        labelEl.textContent = BASEMAPS.find((b) => b.id === state.activeBasemap)?.label ?? state.activeBasemap
+        syncActiveState(state.activeBasemap)
     })
 
-    wrapper.append(toggleBtn, menu)
+    wrapper.append(grid)
     return wrapper
 }

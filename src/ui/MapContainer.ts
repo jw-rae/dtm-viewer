@@ -1,10 +1,17 @@
 import { icon } from './icons.js'
-import { createFloatingToolBar } from './FloatingToolBar.js'
+import { createLeftControlPanel, createLocationSelector } from './LeftControlPanel.js'
 import { createBasemapSelector } from './BasemapSelector.js'
 
 export function createMapContainer(): HTMLElement {
     const main = document.createElement('main')
     main.className = 'map-container'
+
+    const leftPanel = createLeftControlPanel()
+    const locationSelector = createLocationSelector()
+    const basemapSelector = createBasemapSelector()
+
+    const mapStage = document.createElement('section')
+    mapStage.className = 'map-stage'
 
     // OpenLayers attaches its canvas to this element in Step 3.
     const mapCanvas = document.createElement('div')
@@ -46,6 +53,7 @@ export function createMapContainer(): HTMLElement {
     loading.append(loadingInner)
     mapCanvas.append(loading)
 
-    main.append(mapCanvas, createFloatingToolBar(), createBasemapSelector())
+    mapStage.append(mapCanvas, locationSelector, basemapSelector)
+    main.append(leftPanel, mapStage)
     return main
 }

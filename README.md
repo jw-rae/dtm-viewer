@@ -38,6 +38,18 @@ Open http://localhost:5173.
 | `npm run preview` | Preview the production build locally |
 | `npm run typecheck` | Run TypeScript type checking |
 
+## Terrain Data Hosting
+
+Large GeoTIFF files can exceed static host storage limits. You can host terrain data on object storage (Azure Blob, S3, Cloudflare R2, etc.) and point this app to that location.
+
+Set an environment variable for production builds:
+
+```bash
+VITE_TERRAIN_DATA_BASE=https://your-data-host.example.com/digital-terrain-model-viewer/data/
+```
+
+If `VITE_TERRAIN_DATA_BASE` is not set, the app falls back to `${import.meta.env.BASE_URL}data/`.
+
 ## Project Structure
 
 ```

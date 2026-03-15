@@ -3,7 +3,7 @@ import View from 'ol/View.js'
 import TileLayer from 'ol/layer/Tile.js'
 import XYZ from 'ol/source/XYZ.js'
 import { Attribution, ScaleLine, Zoom } from 'ol/control.js'
-import { fromLonLat } from 'ol/proj.js'
+import { fromLonLat, transformExtent } from 'ol/proj.js'
 
 import { appState } from '../state/AppState.js'
 import { getBasemap } from '../data/basemaps.js'
@@ -101,8 +101,10 @@ export function getMap(): Map | null {
     return _map
 }
 
-/** Fly the map view to a lon/lat center at a given zoom level. */
-export function flyTo(lonLat: [number, number], zoom: number): void {
+/** Fit the map view to a WGS84 bounding box [west, south, east, north]. */
+export function fitBounds(bounds4326: [number, number, number, number]): void {
     if (!_map) return
-    _map.getView().animate({ center: fromLonLat(lonLat), zoom, duration: 800 })
+    const [west, south, east, north] = bounds4326
+    const extent = transformExtent([west, south, east, north], 'EPSG:4326', 'EPSG:3857')
+    _map.getView().fit(extent, { padding: [40, 40, 40, 40], duration: 800, maxZoom: 16 })
 }

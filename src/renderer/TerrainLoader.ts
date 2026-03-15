@@ -1,9 +1,10 @@
-import { fromUrl, Pool } from 'geotiff'
+import { fromUrl, fromBlob, Pool } from 'geotiff'
 import { bboxToWgs84 } from '../utils/projection.js'
 import type { ElevationGrid } from '../types/index.js'
 
 /** Target pixels per side. We pick the smallest overview that stays >= this. */
 const TARGET_SIDE = 1024
+const GIT_LFS_POINTER_SIGNATURE = 'version https://git-lfs.github.com/spec/v1'
 
 /** Shared worker pool for parallel tile decoding. */
 const _pool = new Pool()
@@ -80,6 +81,35 @@ function buildUrlCandidates(url: string): string[] {
     return [...candidates]
 }
 
+async function isGitLfsPointerResponse(url: string): Promise<boolean> {
+    if (typeof fetch === 'undefined') return false
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { Range: 'bytes=0-255' },
+            cache: 'no-store',
+        })
+
+        if (!response.ok) return false
+
+        const body = await response.text()
+        return body.startsWith(GIT_LFS_POINTER_SIGNATURE)
+    } catch {
+        return false
+    }
+}
+
+async function detectGitLfsPointerCandidate(candidates: string[]): Promise<string | null> {
+    for (const candidate of candidates) {
+        if (await isGitLfsPointerResponse(candidate)) {
+            return candidate
+        }
+    }
+
+    return null
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function openTiffWithFallback(url: string): Promise<any> {
     const candidates = buildUrlCandidates(url)
@@ -96,12 +126,21 @@ async function openTiffWithFallback(url: string): Promise<any> {
         }
     }
 
+    const lfsPointerCandidate = await detectGitLfsPointerCandidate(candidates)
+    const lfsHint = lfsPointerCandidate
+        ? [
+            `Detected Git LFS pointer at: ${lfsPointerCandidate}`,
+            'Host is returning a Git LFS pointer instead of GeoTIFF binary content.',
+          ]
+        : []
+
     throw new Error(
         [
             'Failed to load terrain GeoTIFF.',
             `Original URL: ${url}`,
             `Tried: ${candidates.join(', ')}`,
             `Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+            ...lfsHint,
         ].join('\n'),
     )
 }
@@ -140,9 +179,8 @@ async function pickBestOverview(tiff: any, minW: number): Promise<any> {
 
 // ── loadTerrain ────────────────────────────────────────────────────────────────
 
-export async function loadTerrain(url: string): Promise<TerrainLoadResult> {
-    const tiff = await openTiffWithFallback(url)
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function processTiff(tiff: any): Promise<TerrainLoadResult> {
     // Metadata (CRS, bbox, noData) always comes from the full-res primary image.
     const fullImage = await tiff.getImage(0)
 
@@ -157,8 +195,6 @@ export async function loadTerrain(url: string): Promise<TerrainLoadResult> {
     const noDataValue: number = fullImage.getGDALNoData() ?? -999999
 
     // ── Pick the best overview and read its pixels at native resolution ───────
-    // NO width/height/resampleMethod — we read the exact pixels the overview
-    // stores. Every noData cell stays exactly at noDataValue with no blending.
     const readImage = await pickBestOverview(tiff, TARGET_SIDE)
     const rasters = await readImage.readRasters({ interleave: false, pool: _pool })
 
@@ -167,8 +203,6 @@ export async function loadTerrain(url: string): Promise<TerrainLoadResult> {
     const height: number = readImage.getHeight()
 
     // ── Elevation range ───────────────────────────────────────────────────────
-    // With no bilinear blending, noData pixels are exactly noDataValue.
-    // A tolerance of 0.5 handles minor float precision drift.
     let minElevation = Infinity
     let maxElevation = -Infinity
     for (let i = 0; i < raw.length; i++) {
@@ -182,4 +216,14 @@ export async function loadTerrain(url: string): Promise<TerrainLoadResult> {
         grid: { data: raw, width, height, noDataValue, minElevation, maxElevation },
         bounds4326,
     }
+}
+
+export async function loadTerrain(url: string): Promise<TerrainLoadResult> {
+    const tiff = await openTiffWithFallback(url)
+    return processTiff(tiff)
+}
+
+export async function loadTerrainFromBlob(file: File): Promise<TerrainLoadResult> {
+    const tiff = await fromBlob(file)
+    return processTiff(tiff)
 }

@@ -8,6 +8,8 @@ import { DEFAULT_BASEMAP_ID, isBasemapId } from '../data/basemaps.js'
 
 export interface AppState {
     currentDataset: string
+    /** Filename of a locally imported TIF, or null when using a built-in dataset. */
+    importedFileName: string | null
     activeTerrainLayer: TerrainLayer
     activeBasemap: string
     terrainLayerStates: TerrainLayerState[]
@@ -126,6 +128,7 @@ class AppStateManager {
         const terrainLayerStates = readTerrainLayerStates()
         this._state = {
             currentDataset: DEFAULT_DATASET_ID,
+            importedFileName: null,
             activeTerrainLayer: deriveActiveTerrainLayer(terrainLayerStates),
             activeBasemap: ensureBasemapId(localStorage.getItem('dtm-basemap')),
             terrainLayerStates,

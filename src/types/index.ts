@@ -46,19 +46,4 @@ export interface ElevationGrid {
     maxElevation: number
 }
 
-// ── Map viewport ───────────────────────────────────────────────────────────────
 
-export interface MapViewportState {
-    zoom: number
-    center: [number, number]
-}
-
-// ── Application state ──────────────────────────────────────────────────────────
-
-export interface AppState {
-    currentDataset: string
-    activeTerrainLayer: TerrainLayer
-    mapViewport: MapViewportState
-    theme: string
-    colorScheme: 'light' | 'dark'
-}

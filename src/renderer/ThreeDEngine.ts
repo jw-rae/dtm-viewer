@@ -11,7 +11,9 @@ function readBgColor(): THREE.Color {
     ctx.fillStyle = raw
     ctx.fillRect(0, 0, 1, 1)
     const d = ctx.getImageData(0, 0, 1, 1).data
-    return new THREE.Color(d[0] / 255, d[1] / 255, d[2] / 255)
+    const isDark = document.documentElement.getAttribute('data-color-scheme') === 'dark'
+    const scale = isDark ? 0.18 : 1
+    return new THREE.Color((d[0] / 255) * scale, (d[1] / 255) * scale, (d[2] / 255) * scale)
 }
 
 // ── Public interface ───────────────────────────────────────────────────────────

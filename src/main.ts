@@ -12,6 +12,8 @@ import { computeAspect, renderAspectMap, createAspectLayer } from './renderer/As
 import { computeHillshade, renderHillshadeMap, createHillshadeLayer } from './renderer/HillshadeService.js'
 import { computeCurvature, renderCurvatureMap, createCurvatureLayer } from './renderer/CurvatureService.js'
 import type { CurvatureResult } from './renderer/CurvatureService.js'
+import { initThreeD } from './renderer/ThreeDEngine.js'
+import type { ThreeDScene } from './renderer/ThreeDEngine.js'
 import { appState } from './state/AppState.js'
 import { DATASETS } from './data/datasets.js'
 import { TerrainLayer } from './types/index.js'
@@ -23,6 +25,26 @@ import type VectorLayer from 'ol/layer/Vector.js'
 import type VectorSource from 'ol/source/Vector.js'
 
 // ── Theme bootstrap ────────────────────────────────────────────────────────────
+// ── Global error overlay ───────────────────────────────────────────────────────
+function showError(msg: string): void {
+  let overlay = document.getElementById('dtm-error-overlay')
+  if (!overlay) {
+    overlay = document.createElement('div')
+    overlay.id = 'dtm-error-overlay'
+    Object.assign(overlay.style, {
+      position: 'fixed', inset: '0', zIndex: '9999',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.85)', color: '#ff6b6b',
+      fontFamily: 'monospace', fontSize: '14px', padding: '32px',
+      whiteSpace: 'pre-wrap', wordBreak: 'break-all', textAlign: 'left',
+    })
+    document.body.append(overlay)
+  }
+  overlay.textContent = `⚠ Runtime error\n\n${msg}`
+}
+window.addEventListener('error', (e) => showError(e.message + (e.filename ? `\n${e.filename}:${e.lineno}` : '')))
+window.addEventListener('unhandledrejection', (e) => showError(String(e.reason)))
+
 // Applied before first paint to prevent a flash of unstyled content.
 const savedTheme = localStorage.getItem('dtm-theme') ?? 'blue'
 const savedScheme = localStorage.getItem('dtm-color-scheme') ?? 'light'
@@ -53,6 +75,53 @@ const cachedCanvases = new Map<TerrainLayer, HTMLCanvasElement>()
 // Curvature intermediate result — allows re-rendering without re-computing when
 // only display options (threshold, featureMode, minLineLength) change.
 let cachedCurvatureResult: CurvatureResult | null = null
+
+// 3D scene reference — non-null while 3D mode is active.
+let threeDScene: ThreeDScene | null = null
+
+function get3DContainer(): HTMLElement | null {
+  return document.getElementById('map-3d')
+}
+
+function compositeLayerCanvas(): HTMLCanvasElement | null {
+  if (!cachedGrid || !cachedBounds) return null
+  const enabledLayers = appState.state.terrainLayerStates.filter((e) => e.enabled)
+  if (enabledLayers.length === 0) return null
+  const { width, height } = cachedGrid
+  const out = document.createElement('canvas')
+  out.width = width
+  out.height = height
+  const ctx = out.getContext('2d')!
+  // Draw bottom-to-top: enabledLayers[0] has the highest z-index (top)
+  for (let i = enabledLayers.length - 1; i >= 0; i--) {
+    const entry = enabledLayers[i]
+    const canvas = getOrComputeCanvas(entry.layer, cachedGrid, cachedBounds)
+    ctx.globalAlpha = entry.opacity
+    ctx.drawImage(canvas, 0, 0)
+  }
+  ctx.globalAlpha = 1
+  return out
+}
+
+function sync3DTexture(): void {
+  if (!threeDScene) return
+  const canvas = compositeLayerCanvas()
+  if (canvas) threeDScene.updateTexture(canvas)
+}
+
+function enter3DMode(): void {
+  const container = get3DContainer()
+  if (!container || !cachedGrid || !cachedBounds) return
+  const canvas = compositeLayerCanvas()
+  if (!canvas) return
+  threeDScene?.dispose()
+  threeDScene = initThreeD(container, cachedGrid, cachedBounds, canvas)
+}
+
+function exit3DMode(): void {
+  threeDScene?.dispose()
+  threeDScene = null
+}
 
 function setLoadingVisible(visible: boolean): void {
   const el = document.getElementById('map-loading')
@@ -240,6 +309,7 @@ async function loadAndRenderDataset(datasetId: string): Promise<void> {
     appState.update({ elevationRange: { min: grid.minElevation, max: grid.maxElevation } })
 
     renderVisibleTerrainLayers()
+    if (appState.state.viewMode === '3d') enter3DMode()
 
     const bbox = createBBoxLayer(bounds4326)
     map.addLayer(bbox)
@@ -271,6 +341,7 @@ async function loadAndRenderFile(file: File): Promise<void> {
     appState.update({ elevationRange: { min: grid.minElevation, max: grid.maxElevation } })
 
     renderVisibleTerrainLayers()
+    if (appState.state.viewMode === '3d') enter3DMode()
 
     const bbox = createBBoxLayer(bounds4326)
     map.addLayer(bbox)
@@ -289,6 +360,12 @@ window.addEventListener('dtm:import-file', (e) => {
   loadAndRenderFile(file)
 })
 
+// Resize the 3D renderer when the map container changes size.
+const map3dEl = document.getElementById('map-3d')
+if (map3dEl) {
+  new ResizeObserver(() => { threeDScene?.resize() }).observe(map3dEl)
+}
+
 // Load first dataset with a real URL, then react to dataset + layer changes.
 const initialDataset = DATASETS.find((d) => !!d.url)
 if (initialDataset) {
@@ -304,6 +381,9 @@ let prevCurvatureType = appState.state.curvatureType
 let prevCurvatureStrengthThreshold = appState.state.curvatureStrengthThreshold
 let prevCurvatureFeatureMode = appState.state.curvatureFeatureMode
 let prevCurvatureMinLineLength = appState.state.curvatureMinLineLength
+let prevViewMode = appState.state.viewMode
+let prevTheme = appState.state.theme
+let prevColorScheme = appState.state.colorScheme
 
 appState.subscribe((state) => {
   const datasetChanged = state.currentDataset !== prevDataset
@@ -315,6 +395,8 @@ appState.subscribe((state) => {
     state.curvatureStrengthThreshold !== prevCurvatureStrengthThreshold ||
     state.curvatureFeatureMode !== prevCurvatureFeatureMode ||
     state.curvatureMinLineLength !== prevCurvatureMinLineLength
+  const viewModeChanged = state.viewMode !== prevViewMode
+  const themeChanged = state.theme !== prevTheme || state.colorScheme !== prevColorScheme
 
   const savedPrevLayerStates = prevLayerStates
   prevDataset = state.currentDataset
@@ -325,6 +407,21 @@ appState.subscribe((state) => {
   prevCurvatureStrengthThreshold = state.curvatureStrengthThreshold
   prevCurvatureFeatureMode = state.curvatureFeatureMode
   prevCurvatureMinLineLength = state.curvatureMinLineLength
+  prevViewMode = state.viewMode
+  prevTheme = state.theme
+  prevColorScheme = state.colorScheme
+
+  // 2D ↔ 3D mode switch
+  if (viewModeChanged) {
+    if (state.viewMode === '3d') enter3DMode()
+    else exit3DMode()
+    return
+  }
+
+  // Theme change — update 3D scene background without rebuilding geometry
+  if (themeChanged && threeDScene) {
+    threeDScene.updateBackground()
+  }
 
   if (datasetChanged && state.currentDataset !== '__imported__') {
     loadAndRenderDataset(state.currentDataset)
@@ -335,11 +432,13 @@ appState.subscribe((state) => {
   if (slopeChanged && isTerrainLayerEnabled(state.terrainLayerStates, TerrainLayer.Slope)) {
     invalidateCanvas(TerrainLayer.Slope)
     rebuildSingleLayer(TerrainLayer.Slope)
+    if (threeDScene) sync3DTexture()
   }
 
   if (hillshadeChanged && isTerrainLayerEnabled(state.terrainLayerStates, TerrainLayer.Hillshade)) {
     invalidateCanvas(TerrainLayer.Hillshade)
     rebuildSingleLayer(TerrainLayer.Hillshade)
+    if (threeDScene) sync3DTexture()
   }
 
   if (isTerrainLayerEnabled(state.terrainLayerStates, TerrainLayer.Curvature)) {
@@ -347,15 +446,18 @@ appState.subscribe((state) => {
       // Full recompute: type change invalidates both intermediate result and canvas.
       invalidateCanvas(TerrainLayer.Curvature)
       rebuildSingleLayer(TerrainLayer.Curvature)
+      if (threeDScene) sync3DTexture()
     } else if (curvatureRenderChanged) {
       // Re-render only: keep cachedCurvatureResult, just regenerate the canvas.
       cachedCanvases.delete(TerrainLayer.Curvature)
       rebuildSingleLayer(TerrainLayer.Curvature)
+      if (threeDScene) sync3DTexture()
     }
   }
 
   // Handle layer enable/disable, opacity, and reordering without recomputing.
   if (layerStackChanged) {
     handleLayerStackChange(savedPrevLayerStates, state.terrainLayerStates)
+    if (threeDScene) sync3DTexture()
   }
 })

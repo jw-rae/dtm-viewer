@@ -10,6 +10,7 @@ export interface AppState {
     currentDataset: string
     /** Filename of a locally imported TIF, or null when using a built-in dataset. */
     importedFileName: string | null
+    viewMode: '2d' | '3d'
     activeTerrainLayer: TerrainLayer
     activeBasemap: string
     terrainLayerStates: TerrainLayerState[]
@@ -129,6 +130,7 @@ class AppStateManager {
         this._state = {
             currentDataset: DEFAULT_DATASET_ID,
             importedFileName: null,
+            viewMode: '2d',
             activeTerrainLayer: deriveActiveTerrainLayer(terrainLayerStates),
             activeBasemap: ensureBasemapId(localStorage.getItem('dtm-basemap')),
             terrainLayerStates,

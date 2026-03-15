@@ -28,6 +28,24 @@ export const DATASETS: TerrainDataset[] = [
         initialZoom: 12,
         initialCenter: [-82.9, 35.57],
     },
+    {
+        id: 'mount-whitney',
+        label: 'Mount Whitney',
+        description: 'USGS 1/3 arc-second DEM covering Mount Whitney, the highest peak in the contiguous US, Inyo County, CA.',
+        url: terrainUrl('USGS_13_mount_whitney.tif'),
+        bounds: [-118.4, 36.5, -118.1, 36.8],
+        initialZoom: 12,
+        initialCenter: [-118.29, 36.58],
+    },
+    {
+        id: 'el-capitan',
+        label: 'El Capitan',
+        description: 'USGS 1/3 arc-second DEM covering El Capitan in Yosemite Valley, Tuolumne County, CA.',
+        url: terrainUrl('USGS_13_el_capitan.tif'),
+        bounds: [-119.7, 37.6, -119.5, 37.8],
+        initialZoom: 13,
+        initialCenter: [-119.63, 37.73],
+    },
 ]
 
 export function getDataset(id: string): TerrainDataset | undefined {

@@ -190,7 +190,7 @@ async function processTiff(tiff: any): Promise<TerrainLoadResult> {
         ?? 4326
 
     const rawBbox = fullImage.getBoundingBox() as [number, number, number, number]
-    const bounds4326 = bboxToWgs84(rawBbox, epsgCode, geoKeys)
+    const bounds4326 = await bboxToWgs84(rawBbox, epsgCode, geoKeys)
 
     const noDataValue: number = fullImage.getGDALNoData() ?? -999999
 

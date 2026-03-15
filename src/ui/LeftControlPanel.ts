@@ -129,55 +129,13 @@ function createDatasetSelect(className: string): HTMLSelectElement {
         select.append(option)
     }
 
-    // Sentinel option that triggers the file picker
-    const importOpt = document.createElement('option')
-    importOpt.value = '__import__'
-    importOpt.textContent = 'Import TIF…'
-    select.append(importOpt)
-
     select.value = appState.state.currentDataset
 
-    // Hidden file input
-    const fileInput = document.createElement('input')
-    fileInput.type = 'file'
-    fileInput.accept = '.tif,.tiff'
-    fileInput.style.display = 'none'
-    fileInput.setAttribute('aria-hidden', 'true')
-    document.body.append(fileInput)
-
-    fileInput.addEventListener('change', () => {
-        const file = fileInput.files?.[0]
-        if (!file) {
-            select.value = appState.state.currentDataset
-            return
-        }
-        window.dispatchEvent(new CustomEvent('dtm:import-file', { detail: { file } }))
-        appState.update({ currentDataset: '__imported__', importedFileName: file.name })
-        fileInput.value = ''
-    })
-
     select.addEventListener('change', () => {
-        if (select.value === '__import__') {
-            select.value = appState.state.currentDataset
-            fileInput.click()
-            return
-        }
         appState.update({ currentDataset: select.value })
     })
 
     appState.subscribe((state) => {
-        // Add/update the imported-file option when a file has been loaded
-        let importedOpt = select.querySelector<HTMLOptionElement>('option[value="__imported__"]')
-        if (state.importedFileName) {
-            if (!importedOpt) {
-                importedOpt = document.createElement('option')
-                importedOpt.value = '__imported__'
-                select.insertBefore(importedOpt, importOpt)
-            }
-            importedOpt.textContent = state.importedFileName
-        } else if (importedOpt) {
-            importedOpt.remove()
-        }
         if (select.value !== state.currentDataset) select.value = state.currentDataset
     })
 

@@ -56,23 +56,25 @@ function clampConnectedPixels(value: number): number {
 
 /** CSS linear gradient string for the popup legend. */
 export const CURVATURE_GRADIENT_CSS =
-    'linear-gradient(to right, #ff3b30 0%, #ff8f86 36%, rgba(255,255,255,0) 50%, #8bc3ff 64%, #0076ff 100%)'
+    'linear-gradient(to right, #0076ff 0%, #8bc3ff 36%, rgba(255,255,255,0) 50%, #ff8f86 64%, #ff3b30 100%)'
 
 function sampleDiverging(t: number): [number, number, number] {
-    // t in [-1, 1]: -1=red (concave), +1=blue (convex)
+    // t in [-1, 1]: -1=blue (concave), +1=red (convex)
     if (t < 0) {
+        // concave → blue
         const f = Math.max(0, Math.min(1, Math.abs(t)))
-        return [
-            Math.round(255 - f * 15),
-            Math.round(170 - f * 120),
-            Math.round(160 - f * 120),
-        ]
-    } else {
-        const f = Math.max(0, Math.min(1, t))
         return [
             Math.round(140 - f * 120),
             Math.round(200 - f * 90),
             255,
+        ]
+    } else {
+        // convex → red
+        const f = Math.max(0, Math.min(1, t))
+        return [
+            Math.round(255 - f * 15),
+            Math.round(170 - f * 120),
+            Math.round(160 - f * 120),
         ]
     }
 }

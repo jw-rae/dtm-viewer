@@ -29,7 +29,27 @@ function ensureEpsgDef(epsgCode: number): string {
         return key
     }
 
-    throw new Error(`Unsupported EPSG:${epsgCode}. Register a proj4 definition in src/utils/projection.ts.`)
+    throw new Error(`EPSG:${epsgCode}`)
+}
+
+// ── fetchAndRegisterEpsg ──────────────────────────────────────────────────────
+// For any CRS not covered by the static rules above, fetch the proj4 string
+// from epsg.io at runtime and register it on the fly.
+
+async function fetchAndRegisterEpsg(epsgCode: number): Promise<string> {
+    const key = `EPSG:${epsgCode}`
+    if (proj4.defs(key)) return key
+
+    const response = await fetch(`https://epsg.io/${epsgCode}.proj4`)
+    if (!response.ok) {
+        throw new Error(`Could not fetch projection for EPSG:${epsgCode} (HTTP ${response.status})`)
+    }
+    const proj4str = (await response.text()).trim()
+    if (!proj4str || proj4str.startsWith('<!')) {
+        throw new Error(`No proj4 definition found for EPSG:${epsgCode}`)
+    }
+    proj4.defs(key, proj4str)
+    return key
 }
 
 // ── bboxToWgs84 ───────────────────────────────────────────────────────────────
@@ -41,12 +61,12 @@ function ensureEpsgDef(epsgCode: number): string {
  * Works for geographic (lat/lon), projected (UTM, etc.), and registered
  * national grids. Returns the input unchanged for EPSG:4326 / 4269.
  */
-export function bboxToWgs84(
+export async function bboxToWgs84(
     bbox: [number, number, number, number],
     epsgCode: number,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     geoKeys: any,
-): [number, number, number, number] {
+): Promise<[number, number, number, number]> {
     const isGeographic =
         geoKeys.GTModelTypeGeoKey === 2 ||
         epsgCode === 4326 ||
@@ -56,7 +76,13 @@ export function bboxToWgs84(
         return [bbox[0], bbox[1], bbox[2], bbox[3]]
     }
 
-    const projKey = ensureEpsgDef(epsgCode)
+    let projKey: string
+    try {
+        projKey = ensureEpsgDef(epsgCode)
+    } catch {
+        projKey = await fetchAndRegisterEpsg(epsgCode)
+    }
+
     const toWGS84 = proj4(projKey, 'WGS84')
     const sw = toWGS84.forward([bbox[0], bbox[1]])
     const ne = toWGS84.forward([bbox[2], bbox[3]])

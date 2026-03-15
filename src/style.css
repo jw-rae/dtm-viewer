@@ -85,10 +85,6 @@ body {
 
 /* 2D / 3D toggle button */
 .view-toggle-btn {
-    position: fixed;
-    top: var(--space-md);
-    right: calc(var(--space-md) + 206px);
-    z-index: var(--z-index-20);
     display: flex;
     align-items: center;
     gap: 5px;
@@ -102,7 +98,6 @@ body {
     font-family: var(--font-family-sans);
     font-weight: 500;
     cursor: pointer;
-    box-shadow: var(--shadow-md);
     transition:
         background var(--duration-150) var(--ease-out),
         border-color var(--duration-150) var(--ease-out);
@@ -119,11 +114,19 @@ body {
     color: #fff;
 }
 
-.map-location-picker {
+.map-top-bar {
     position: fixed;
     top: var(--space-md);
     right: var(--space-md);
     z-index: var(--z-index-20);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    box-shadow: var(--shadow-md);
+    border-radius: var(--border-radius-md);
+}
+
+.map-location-picker {
     height: 34px;
     min-width: 190px;
     border: 1px solid var(--color-border-primary);
@@ -133,7 +136,6 @@ body {
     padding: 0 var(--space-sm);
     font-size: var(--font-size-sm);
     font-family: var(--font-family-sans);
-    box-shadow: var(--shadow-md);
 }
 
 .map-location-picker:focus {

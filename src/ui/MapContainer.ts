@@ -96,7 +96,11 @@ export function createMapContainer(): HTMLElement {
         appState.update({ viewMode: appState.state.viewMode === '2d' ? '3d' : '2d' })
     })
 
-    mapStage.append(mapCanvas, map3d, locationSelector, basemapSelector, viewToggle)
+    const topBar = document.createElement('div')
+    topBar.className = 'map-top-bar'
+    topBar.append(viewToggle, locationSelector)
+
+    mapStage.append(mapCanvas, map3d, topBar, basemapSelector)
     main.append(leftPanel, mapStage)
     return main
 }

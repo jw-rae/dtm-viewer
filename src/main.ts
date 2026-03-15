@@ -45,11 +45,17 @@ function showError(msg: string): void {
 window.addEventListener('error', (e) => showError(e.message + (e.filename ? `\n${e.filename}:${e.lineno}` : '')))
 window.addEventListener('unhandledrejection', (e) => showError(String(e.reason)))
 
-// Applied before first paint to prevent a flash of unstyled content.
-const savedTheme = localStorage.getItem('dtm-theme') ?? 'blue'
-const savedScheme = localStorage.getItem('dtm-color-scheme') ?? 'light'
-document.documentElement.setAttribute('data-theme', savedTheme)
-document.documentElement.setAttribute('data-color-scheme', savedScheme)
+// Apply stored theme/scheme only if the parent app hasn't already set them.
+// When embedded in a host app that manages its own theme attributes, this
+// prevents the DTM app from overwriting the host's theme on mount.
+if (!document.documentElement.hasAttribute('data-theme')) {
+  const savedTheme = localStorage.getItem('dtm-theme') ?? 'blue'
+  document.documentElement.setAttribute('data-theme', savedTheme)
+}
+if (!document.documentElement.hasAttribute('data-color-scheme')) {
+  const savedScheme = localStorage.getItem('dtm-color-scheme') ?? 'light'
+  document.documentElement.setAttribute('data-color-scheme', savedScheme)
+}
 
 // ── Mount UI ───────────────────────────────────────────────────────────────────
 const app = document.getElementById('app')!

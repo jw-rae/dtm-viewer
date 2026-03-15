@@ -131,7 +131,7 @@ async function openTiffWithFallback(url: string): Promise<any> {
         ? [
             `Detected Git LFS pointer at: ${lfsPointerCandidate}`,
             'Host is returning a Git LFS pointer instead of GeoTIFF binary content.',
-          ]
+        ]
         : []
 
     throw new Error(
